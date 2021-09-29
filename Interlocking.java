@@ -1,5 +1,3 @@
-package impl;
-
 public interface Interlocking
 {
 

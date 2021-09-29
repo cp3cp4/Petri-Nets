@@ -1,7 +1,144 @@
-package impl;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class InterlockingImpl implements Interlocking
 {
+
+    private Place[] places;
+    private Map<String, Transition> transitionMap = new HashMap<>();
+    private Map<String, Train> trainMap = new HashMap<>();
+
+    /**
+     * Init Petri Nets
+     *
+     * t1:  1 -> 5
+     * t2': 5 6 -> 2
+     * t3:  3 -> 4 7
+     * t3': 4 -> 3
+     * t4:  5 -> 8 9
+     * t4': 9 -> 5
+     * t5:  10 9 -> 6
+     * t6:  7 -> 11
+     * t6': 11 -> 7
+     *
+     * t1 has higher privileges than t3 & t3'
+     * t2' has higher privileges than t3
+     */
+    public InterlockingImpl() {
+        Place p1 = new Place(1);
+        Place p2 = new Place(2);
+        Place p3 = new Place(3);
+        Place p4 = new Place(4);
+        Place p5 = new Place(5);
+        Place p6 = new Place(6);
+        Place p7 = new Place(7);
+        Place p8 = new Place(8);
+        Place p9 = new Place(9);
+        Place p10 = new Place(10);
+        Place p11 = new Place(11);
+
+        // t1:  1 -> 5
+        List<InputArc> t1InputArcList = new ArrayList<>();
+        InputArc i15 = new InputArc("1-t1", p1);
+        t1InputArcList.add(i15);
+        List<OutputArc> t1OutputArcList = new ArrayList<>();
+        OutputArc o15 = new OutputArc("t1-5", p5);
+        t1OutputArcList.add(o15);
+        Transition t1 = new Transition("t1", t1InputArcList, t1OutputArcList);
+        transitionMap.put("t1", t1);
+
+        // t2': 5 6 -> 2
+        List<InputArc> t2_InputArcList = new ArrayList<>();
+        InputArc i52 = new InputArc("5-t2'", p5);
+        InputArc i62 = new InputArc("6-t2'", p6);
+        t2_InputArcList.add(i52);
+        t2_InputArcList.add(i62);
+        List<OutputArc> t2_OutputArcList = new ArrayList<>();
+        OutputArc o_t2_2 = new OutputArc("t2'-2", p2);
+        t2_OutputArcList.add(o_t2_2);
+        Transition t2_ = new Transition("t2'", t2_InputArcList, t2_OutputArcList);
+        transitionMap.put("t2'", t2_);
+
+        // t3:  3 -> 4 7
+        List<InputArc> t3InputArcList = new ArrayList<>();
+        InputArc i3_t3 = new InputArc("3-t3", p3);
+        t3InputArcList.add(i3_t3);
+        List<OutputArc> t3OutputArcList = new ArrayList<>();
+        OutputArc o34 = new OutputArc("t3-4", p4);
+        OutputArc o37 = new OutputArc("t3-7", p7);
+        t3OutputArcList.add(o34);
+        t3OutputArcList.add(o37);
+        Transition t3 = new Transition("t3", t3InputArcList, t3OutputArcList);
+        transitionMap.put("t3", t3);
+
+        // t3': 4 -> 3
+        List<InputArc> t3_InputArcList = new ArrayList<>();
+        InputArc i_43 = new InputArc("4-t3'", p4);
+        t3_InputArcList.add(i_43);
+        List<OutputArc> t3_OutputArcList = new ArrayList<>();
+        OutputArc o_43 = new OutputArc("t3'-3", p3);
+        t3_OutputArcList.add(o_43);
+        Transition t3_ = new Transition("t3", t3_InputArcList, t3_OutputArcList);
+        transitionMap.put("t3'", t3_);
+
+        // t4:  5 -> 8 9
+        List<InputArc> t4InputArcList = new ArrayList<>();
+        InputArc i58 = new InputArc("5-t4", p5);
+        t4InputArcList.add(i58);
+        List<OutputArc> t4OutputArcList = new ArrayList<>();
+        OutputArc o58 = new OutputArc("t4-8", p8);
+        OutputArc o59 = new OutputArc("t4-9", p9);
+        t4OutputArcList.add(o58);
+        t4OutputArcList.add(o59);
+        Transition t4 = new Transition("t4", t4InputArcList, t4OutputArcList);
+        transitionMap.put("t4", t4);
+
+        // t4': 9 -> 5
+        List<InputArc> t4_InputArcList = new ArrayList<>();
+        InputArc i_95 = new InputArc("9-t4'", p9);
+        t4_InputArcList.add(i_95);
+        List<OutputArc> t4_OutputArcList = new ArrayList<>();
+        OutputArc o95 = new OutputArc("t4'-5", p5);
+        t4_OutputArcList.add(o95);
+        Transition t4_ = new Transition("t4'", t4_InputArcList, t4_OutputArcList);
+        transitionMap.put("t4'", t4_);
+
+        // t5:  10 9 -> 6
+        List<InputArc> t5InputArcList = new ArrayList<>();
+        InputArc i10_6 = new InputArc("10-t5", p10);
+        InputArc i9_6 = new InputArc("9-t5", p9);
+        t5InputArcList.add(i10_6);
+        t5InputArcList.add(i9_6);
+        List<OutputArc> t5OutputArcList = new ArrayList<>();
+        OutputArc ot5_6 = new OutputArc("t5-6", p6);
+        t5OutputArcList.add(ot5_6);
+        Transition t5 = new Transition("t5", t5InputArcList, t5OutputArcList);
+        transitionMap.put("t5", t5);
+
+        // t6:  7 -> 11
+        List<InputArc> t6InputArcList = new ArrayList<>();
+        InputArc i7_11 = new InputArc("7-t6", p7);
+        t6InputArcList.add(i7_11);
+        List<OutputArc> t6OutputArcList = new ArrayList<>();
+        OutputArc o7_11 = new OutputArc("t6-11", p11);
+        t6OutputArcList.add(o7_11);
+        Transition t6 = new Transition("t6", t6InputArcList, t6OutputArcList);
+        transitionMap.put("t6", t6);
+
+        // t6': 11 -> 7
+        List<InputArc> t6_InputArcList = new ArrayList<>();
+        InputArc i11_7 = new InputArc("11-t6'", p11);
+        t6_InputArcList.add(i11_7);
+        List<OutputArc> t6_OutputArcList = new ArrayList<>();
+        OutputArc o11_7 = new OutputArc("t6'-7", p7);
+        t6_OutputArcList.add(o11_7);
+        Transition t6_ = new Transition("t6'", t6_InputArcList, t6_OutputArcList);
+        transitionMap.put("t6'", t6_);
+
+        places = new Place[]{ p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11};
+    }
 
     /**
      * Adds a train to the rail corridor.
@@ -16,7 +153,12 @@ public class InterlockingImpl implements Interlocking
      */
     public void addTrain(String trainName, int entryTrackSection, int destinationTrackSection)
         throws IllegalArgumentException, IllegalStateException {
-
+            if (this.trainMap.containsKey(trainName)) {
+                throw new IllegalArgumentException("the train named as" + trainName + " is already in use");
+            }
+            Train train = new Train(trainName, entryTrackSection, destinationTrackSection);
+             this.checkPathIsValid(entryTrackSection, destinationTrackSection);
+            places[entryTrackSection - 1].addToken(train);
         }
 
     /**
@@ -44,7 +186,8 @@ public class InterlockingImpl implements Interlocking
      */
     public String getSection(int trackSection)
         throws IllegalArgumentException {
-            return "";
+            this.checkTrackSectionValid(trackSection);
+            return this.places[trackSection - 1].getTrainName();
         }
 
     /**
@@ -52,15 +195,43 @@ public class InterlockingImpl implements Interlocking
      *
      * @param   trainName The name of the train.
      * @return  The id number of section of track the train is occupying, or -1 if the train is no longer in the rail corridor
-     * @throws  IllegalArgumentException 
+     * @throws  IllegalArgumentException
      *              if the train name does not exist
      */
     public int getTrain(String trainName)
         throws IllegalArgumentException {
-            return 0;
+            if (!this.trainMap.containsKey(trainName)) {
+                throw new IllegalArgumentException("train named " + trainName + "does not exist");
+            }
+
+            return this.trainMap.get(trainName).getCurSection();
         }
 
-    public static void main(String[] args) {
-        System.out.println("0000000------------------");
+    /**
+     * Check there is valid path from the entry to the destination.
+     *
+     * @param   entryTrackSection The id number of the track section that the train is entering into.
+     * @param   destinationTrackSection The id number of the track section that the train should exit from.
+     *  @throws IllegalArgumentException
+     *              if there is no valid path from the entry to the destination
+     */
+    public void checkPathIsValid(int entryTrackSection, int destinationTrackSection) {
+        this.checkTrackSectionValid(entryTrackSection);
+        this.checkTrackSectionValid(destinationTrackSection);
     }
+
+    /**
+     * Check track section is valid.
+     * @param trackSection The id number of the section of track.
+     * @throws  IllegalArgumentException
+     *              if the track section does not exist
+     */
+    public void checkTrackSectionValid(int trackSection) {
+        if (trackSection < 1 || trackSection > this.places.length) {
+            throw new IllegalArgumentException("track section does not exist!");
+        }
+    }
+    public static void main(String[] args) {
+    }
+    
 }
