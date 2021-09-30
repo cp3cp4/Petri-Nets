@@ -8,6 +8,7 @@ public class Train {
     private int entryTrackSection;
     private int destinationTrackSection;
     private int curSection;
+    private Route route;
 
     public Train(String trainName, String moveDirection) {
         this.trainName = trainName;
@@ -18,6 +19,15 @@ public class Train {
         this.trainName = trainName;
         this.entryTrackSection = entryTrackSection;
         this.destinationTrackSection = destinationTrackSection;
+        this.moveDirection = util.getTrainMoveDirection(entryTrackSection, destinationTrackSection);
+    }
+
+    public Train(String trainName, int entryTrackSection, int destinationTrackSection, Route route) {
+        this.trainName = trainName;
+        this.entryTrackSection = entryTrackSection;
+        this.destinationTrackSection = destinationTrackSection;
+        this.moveDirection = util.getTrainMoveDirection(entryTrackSection, destinationTrackSection);
+        this.route = route;
     }
 
     public String getTrainName() {
@@ -58,5 +68,13 @@ public class Train {
 
     public void setCurSection(int curSection) {
         this.curSection = curSection;
+    }
+
+    public Route getRoute() {
+        return route;
+    }
+
+    public void setRoute(Route route) {
+        this.route = route;
     }
 }

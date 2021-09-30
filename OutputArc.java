@@ -6,7 +6,7 @@ public class OutputArc extends Arc {
     // add token to output arc from the action of input arc
     public void trigger(Train token) {
         Place place = this.getPlace();
-        if (place.getTokens().size() == 0) {
+        if (place.getToken() == null) {
             place.addToken(token);
         }
     }

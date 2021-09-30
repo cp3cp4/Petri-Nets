@@ -9,6 +9,8 @@ public class InterlockingImpl implements Interlocking
     private Place[] places;
     private Map<String, Transition> transitionMap = new HashMap<>();
     private Map<String, Train> trainMap = new HashMap<>();
+    private Map<Integer, List<Integer>> roadMap = new HashMap<>();
+    private Map<String, Route> routeMap;
 
     /**
      * Init Petri Nets
@@ -16,7 +18,7 @@ public class InterlockingImpl implements Interlocking
      * t1:  1 -> 5
      * t2': 5 6 -> 2
      * t3:  3 -> 4 7
-     * t3': 4 -> 3
+     * t3': 7 4 -> 3
      * t4:  5 -> 8 9
      * t4': 9 -> 5
      * t5:  10 9 -> 6
@@ -25,6 +27,9 @@ public class InterlockingImpl implements Interlocking
      *
      * t1 has higher privileges than t3 & t3'
      * t2' has higher privileges than t3
+     *
+     * t3, t6 will conflict with t3', t6'
+     * t4 will conflict with t4'
      */
     public InterlockingImpl() {
         Place p1 = new Place(1);
@@ -73,10 +78,11 @@ public class InterlockingImpl implements Interlocking
         Transition t3 = new Transition("t3", t3InputArcList, t3OutputArcList);
         transitionMap.put("t3", t3);
 
-        // t3': 4 -> 3
+        // t3': 7 4 -> 3
         List<InputArc> t3_InputArcList = new ArrayList<>();
         InputArc i_43 = new InputArc("4-t3'", p4);
-        t3_InputArcList.add(i_43);
+        InputArc i_73 = new InputArc("7-t3'", p7);
+        t3_InputArcList.add(i_73);
         List<OutputArc> t3_OutputArcList = new ArrayList<>();
         OutputArc o_43 = new OutputArc("t3'-3", p3);
         t3_OutputArcList.add(o_43);
@@ -138,6 +144,75 @@ public class InterlockingImpl implements Interlocking
         transitionMap.put("t6'", t6_);
 
         places = new Place[]{ p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11};
+
+        // left to right (south)
+        // 1 -> 8 9 (1-5-8, 1-5-9)
+        List<Integer> r1 = new ArrayList<>();
+        r1.add(8);
+        r1.add(9);
+        roadMap.put(1, r1);
+
+        Route route1_8 = new Route(1);
+        util.addNextToRoute(route1_8, 5);
+        util.addNextToRoute(route1_8, 8);
+        this.routeMap.put("1-8", route1_8);
+
+        Route route1_9 = new Route(1);
+        util.addNextToRoute(route1_9, 5);
+        util.addNextToRoute(route1_9, 9);
+        this.routeMap.put("1-9", route1_9);
+
+        // 3 -> 4 11 (3-4, 3-7-11)
+        List<Integer> r3 = new ArrayList<>();
+        r3.add(4);
+        r3.add(11);
+        roadMap.put(3, r3);
+
+        Route route3_4 = new Route(3);
+        util.addNextToRoute(route3_4, 4);
+        this.routeMap.put("3-4", route3_4);
+
+        Route route3_11 = new Route(3);
+        util.addNextToRoute(route3_11, 7);
+        util.addNextToRoute(route3_11, 11);
+        this.routeMap.put("3-11", route3_11);
+
+        // right to left (north)
+        // 4 -> 3 (4-3)
+        List<Integer> r4 = new ArrayList<>();
+        r4.add(3);
+        roadMap.put(4, r4);
+
+        Route route4_3 = new Route(4);
+        util.addNextToRoute(route4_3, 4);
+        this.routeMap.put("4-3", route4_3);
+
+        // 9 -> 2 (9-6-2)
+        List<Integer> r9 = new ArrayList<>();
+        r9.add(2);
+        roadMap.put(9, r9);
+
+        Route route9_2 = new Route(9);
+        util.addNextToRoute(route9_2, 2);
+        this.routeMap.put("9-2", route9_2);
+        // 10 -> 2 (10-6-2)
+        List<Integer> r10 = new ArrayList<>();
+        r10.add(2);
+        roadMap.put(10, r10);
+
+        Route route10_2 = new Route(10);
+        util.addNextToRoute(route10_2, 6);
+        util.addNextToRoute(route10_2, 2);
+        this.routeMap.put("10-2", route10_2);
+        // 11 -> 3 (11-7-3)
+        List<Integer> r11 = new ArrayList<>();
+        r11.add(3);
+        roadMap.put(11, r11);
+
+        Route route11_3 = new Route(11);
+        util.addNextToRoute(route11_3, 7);
+        util.addNextToRoute(route11_3, 3);
+        this.routeMap.put("11-3", route11_3);
     }
 
     /**
@@ -156,9 +231,15 @@ public class InterlockingImpl implements Interlocking
             if (this.trainMap.containsKey(trainName)) {
                 throw new IllegalArgumentException("the train named as" + trainName + " is already in use");
             }
-            Train train = new Train(trainName, entryTrackSection, destinationTrackSection);
-             this.checkPathIsValid(entryTrackSection, destinationTrackSection);
+
+            this.checkPathIsValid(entryTrackSection, destinationTrackSection);
+            Route route = this.routeMap.get(String.valueOf(entryTrackSection) + "-" + String.valueOf(destinationTrackSection));
+            Train train = new Train(trainName, entryTrackSection, destinationTrackSection, route);
             places[entryTrackSection - 1].addToken(train);
+            if (this.checkIsConflict(entryTrackSection, destinationTrackSection)) {
+                places[entryTrackSection - 1].resetToken();
+                throw new IllegalArgumentException("There is no valid path from the entry to the destination.");
+            }
         }
 
     /**
@@ -173,6 +254,11 @@ public class InterlockingImpl implements Interlocking
      */
     public int moveTrains(String[] trainNames)
         throws IllegalArgumentException {
+            // 找到可以运行的变迁
+            // 变迁排序
+            // 已经到达终点的离开轨道, 更新trainMap
+            // 激活变迁
+
             return 0;
         }
 
@@ -218,6 +304,11 @@ public class InterlockingImpl implements Interlocking
     public void checkPathIsValid(int entryTrackSection, int destinationTrackSection) {
         this.checkTrackSectionValid(entryTrackSection);
         this.checkTrackSectionValid(destinationTrackSection);
+
+        Route route = this.routeMap.get(String.valueOf(entryTrackSection) + "-" + String.valueOf(destinationTrackSection));
+        if (route == null) {
+            throw new IllegalArgumentException("there is no valid path from the entry to the destination");
+        }
     }
 
     /**
@@ -231,7 +322,33 @@ public class InterlockingImpl implements Interlocking
             throw new IllegalArgumentException("track section does not exist!");
         }
     }
+
+    public boolean checkIsConflict(int entryTrackSection, int destinationTrackSection) {
+        // 3-4
+        if (entryTrackSection == 3 && destinationTrackSection == 4) {
+            for (Train train : this.trainMap.values()) {
+                if (train.getDestinationTrackSection() == 3 && train.getEntryTrackSection() == 4) {
+                    return false;
+                }
+            }
+        } else if (entryTrackSection == 4 && destinationTrackSection == 3) {
+            for (Train train : this.trainMap.values()) {
+                if (train.getDestinationTrackSection() == 4 && train.getEntryTrackSection() == 3) {
+                    return false;
+                }
+            }
+        } else if (entryTrackSection == 3 && destinationTrackSection == 11) { // 3 - 11
+            for (Train train : this.trainMap.values()) {
+                if (train.getDestinationTrackSection() == 11 && train.getEntryTrackSection() == 3) {
+                    return false;
+                }
+            }
+        }
+        // 1-9
+
+        return true;
+    }
+
     public static void main(String[] args) {
     }
-    
 }

@@ -8,8 +8,8 @@ public class InputArc extends Arc {
     public Train trigger() {
         Train token = null;
         Place place = this.getPlace();
-        if (place.getTokens().size() == 1) {
-            token = this.getPlace().getTokens().get(0);
+        if (place.getToken() != null) {
+            token = this.getPlace().getToken();
             this.getPlace().resetToken();
         }
 
@@ -18,6 +18,6 @@ public class InputArc extends Arc {
 
     // Validate action of input arc is possible
     public boolean isArcValid() {
-        return this.getPlace().getTokens().size() == 1;
+        return this.getPlace().getToken() != null;
     }
 }
