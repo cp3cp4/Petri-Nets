@@ -1,7 +1,5 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class InterlockingImpl implements Interlocking
 {
@@ -10,13 +8,13 @@ public class InterlockingImpl implements Interlocking
     private Map<String, Transition> transitionMap = new HashMap<>();
     private Map<String, Train> trainMap = new HashMap<>();
     private Map<Integer, List<Integer>> roadMap = new HashMap<>();
-    private Map<String, Route> routeMap;
+    private Map<String, Route> routeMap = new HashMap<>();
 
     /**
      * Init Petri Nets
      *
      * t1:  1 -> 5
-     * t2': 5 6 -> 2
+     * t2': 5 -> 2
      * t3:  3 -> 4 7
      * t3': 7 4 -> 3
      * t4:  5 -> 8 9
@@ -54,12 +52,10 @@ public class InterlockingImpl implements Interlocking
         Transition t1 = new Transition("t1", t1InputArcList, t1OutputArcList);
         transitionMap.put("t1", t1);
 
-        // t2': 5 6 -> 2
+        // t2': 5 -> 2
         List<InputArc> t2_InputArcList = new ArrayList<>();
         InputArc i52 = new InputArc("5-t2'", p5);
-        InputArc i62 = new InputArc("6-t2'", p6);
         t2_InputArcList.add(i52);
-        t2_InputArcList.add(i62);
         List<OutputArc> t2_OutputArcList = new ArrayList<>();
         OutputArc o_t2_2 = new OutputArc("t2'-2", p2);
         t2_OutputArcList.add(o_t2_2);
@@ -75,7 +71,7 @@ public class InterlockingImpl implements Interlocking
         OutputArc o37 = new OutputArc("t3-7", p7);
         t3OutputArcList.add(o34);
         t3OutputArcList.add(o37);
-        Transition t3 = new Transition("t3", t3InputArcList, t3OutputArcList);
+        Transition t3 = new Transition("t3", t3InputArcList, t3OutputArcList, 0);
         transitionMap.put("t3", t3);
 
         // t3': 7 4 -> 3
@@ -86,7 +82,7 @@ public class InterlockingImpl implements Interlocking
         List<OutputArc> t3_OutputArcList = new ArrayList<>();
         OutputArc o_43 = new OutputArc("t3'-3", p3);
         t3_OutputArcList.add(o_43);
-        Transition t3_ = new Transition("t3", t3_InputArcList, t3_OutputArcList);
+        Transition t3_ = new Transition("t3", t3_InputArcList, t3_OutputArcList, 0);
         transitionMap.put("t3'", t3_);
 
         // t4:  5 -> 8 9
@@ -235,10 +231,13 @@ public class InterlockingImpl implements Interlocking
             this.checkPathIsValid(entryTrackSection, destinationTrackSection);
             Route route = this.routeMap.get(String.valueOf(entryTrackSection) + "-" + String.valueOf(destinationTrackSection));
             Train train = new Train(trainName, entryTrackSection, destinationTrackSection, route);
-            places[entryTrackSection - 1].addToken(train);
+
+            this.places[entryTrackSection - 1].addToken(train);
             if (this.checkIsConflict(entryTrackSection, destinationTrackSection)) {
-                places[entryTrackSection - 1].resetToken();
+                this.places[entryTrackSection - 1].resetToken();
                 throw new IllegalArgumentException("There is no valid path from the entry to the destination.");
+            } else {
+                this.trainMap.put(trainName, train);
             }
         }
 
@@ -254,12 +253,30 @@ public class InterlockingImpl implements Interlocking
      */
     public int moveTrains(String[] trainNames)
         throws IllegalArgumentException {
-            // 找到可以运行的变迁
-            // 变迁排序
-            // 已经到达终点的离开轨道, 更新trainMap
-            // 激活变迁
+        int movedTrainCount = 0;
+        // get all transitions that can execute
+        List<Transition> transitionList = this.getTransitionList();
 
-            return 0;
+        // sort transitions by weight
+        if (!transitionList.isEmpty()) {
+            transitionList = transitionList.stream().sorted(Comparator.comparing(Transition::getWeight).reversed()).collect(Collectors.toList());
+        }
+        // When a train reaches its destination track section, it exits the rail corridor next time it moves.
+        for (int i = 0; i < this.places.length; ++i) {
+            Place place = this.places[i];
+            if (place != null && place.isReachDestination()) {
+                this.places[i] = null;
+                movedTrainCount += 1; // train leave its destination
+            }
+            // update trainMap
+            this.trainMap.remove(place.getTrainName());
+        }
+        // execute transition
+        for (Transition transition : transitionList) {
+            movedTrainCount += transition.transit();
+        }
+
+        return movedTrainCount;
         }
 
     /**
@@ -328,25 +345,76 @@ public class InterlockingImpl implements Interlocking
         if (entryTrackSection == 3 && destinationTrackSection == 4) {
             for (Train train : this.trainMap.values()) {
                 if (train.getDestinationTrackSection() == 3 && train.getEntryTrackSection() == 4) {
-                    return false;
+                    return true;
                 }
             }
         } else if (entryTrackSection == 4 && destinationTrackSection == 3) {
             for (Train train : this.trainMap.values()) {
                 if (train.getDestinationTrackSection() == 4 && train.getEntryTrackSection() == 3) {
-                    return false;
+                    return true;
                 }
             }
         } else if (entryTrackSection == 3 && destinationTrackSection == 11) { // 3 - 11
             for (Train train : this.trainMap.values()) {
                 if (train.getDestinationTrackSection() == 11 && train.getEntryTrackSection() == 3) {
-                    return false;
+                    return true;
                 }
             }
         }
-        // 1-9
 
-        return true;
+        return false;
+    }
+
+    public List<Transition> getTransitionList() {
+        List<Transition> transList = new ArrayList<>();
+        for (String name : transitionMap.keySet()) {
+            Transition tmpTransition = transitionMap.get(name);
+            if (tmpTransition.canTransit()) {
+                transList.add(tmpTransition);
+            }
+        }
+
+        return transList;
+    }
+
+    public Place[] getPlaces() {
+        return places;
+    }
+
+    public void setPlaces(Place[] places) {
+        this.places = places;
+    }
+
+    public Map<String, Transition> getTransitionMap() {
+        return transitionMap;
+    }
+
+    public void setTransitionMap(Map<String, Transition> transitionMap) {
+        this.transitionMap = transitionMap;
+    }
+
+    public Map<String, Train> getTrainMap() {
+        return trainMap;
+    }
+
+    public void setTrainMap(Map<String, Train> trainMap) {
+        this.trainMap = trainMap;
+    }
+
+    public Map<Integer, List<Integer>> getRoadMap() {
+        return roadMap;
+    }
+
+    public void setRoadMap(Map<Integer, List<Integer>> roadMap) {
+        this.roadMap = roadMap;
+    }
+
+    public Map<String, Route> getRouteMap() {
+        return routeMap;
+    }
+
+    public void setRouteMap(Map<String, Route> routeMap) {
+        this.routeMap = routeMap;
     }
 
     public static void main(String[] args) {

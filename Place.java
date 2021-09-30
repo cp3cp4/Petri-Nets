@@ -3,16 +3,15 @@
  */
 public class Place {
     private int section;
+    // each section only have one train
+    private Train token;
 
     public Place(int section) {
         this.section = section;
     }
-    
-    // each section only have one train,
-    // maybe i should define token as Train.class
-    private Train token;
 
-    public void addToken(Train train) throws IllegalStateException {
+    public boolean addToken(Train train) throws IllegalStateException {
+        boolean flag = false;
         if (this.token == null) {
             Route curTrainRoute = train.getRoute();
             // add token only if current section is on the route of train
@@ -20,6 +19,7 @@ public class Place {
                 if (curTrainRoute.getSection() == section) {
                     train.setCurSection(this.section);
                     this.token = train;
+                    flag = true;
                     break;
                 }
                 curTrainRoute = curTrainRoute.getNext();
@@ -27,13 +27,24 @@ public class Place {
         } else {
             throw new IllegalStateException("the entry track is already occupied by " + this.token.getTrainName());
         }
+
+        return flag;
     }
 
     public void resetToken() {
         this.token = null;
     }
 
+    public boolean isReachDestination() {
+        boolean flag = false;
+        if (this.token != null) {
+            if (this.token.getDestinationTrackSection() == this.section) {
+                flag = true;
+            }
+        }
 
+        return flag;
+    }
 
     public int getSection() {
         return section;

@@ -4,10 +4,13 @@ public class OutputArc extends Arc {
     }
 
     // add token to output arc from the action of input arc
-    public void trigger(Train token) {
+    public boolean trigger(Train token) {
+        boolean flag = false;
         Place place = this.getPlace();
         if (place.getToken() == null) {
-            place.addToken(token);
+            flag = place.addToken(token);
         }
+
+        return flag;
     }
 }

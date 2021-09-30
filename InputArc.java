@@ -16,6 +16,16 @@ public class InputArc extends Arc {
         return token;
     }
 
+    public Train getToken() {
+        Train token = null;
+        Place place = this.getPlace();
+        if (place.getToken() != null) {
+            token = this.getPlace().getToken();
+        }
+
+        return token;
+    }
+
     // Validate action of input arc is possible
     public boolean isArcValid() {
         return this.getPlace().getToken() != null;
