@@ -1,3 +1,6 @@
+/**
+ * the class InputArc
+ */
 public class InputArc extends Arc {
     public InputArc(String name, Place place) {
         super(name, place);
@@ -16,6 +19,10 @@ public class InputArc extends Arc {
         return token;
     }
 
+    /**
+     *
+     * @return Train
+     */
     public Train getToken() {
         Train token = null;
         Place place = this.getPlace();
@@ -26,7 +33,11 @@ public class InputArc extends Arc {
         return token;
     }
 
-    // Validate action of input arc is possible
+    /**
+     *
+     * @return
+     * Validate action of input arc is possible
+     */
     public boolean isArcValid() {
         return this.getPlace().getToken() != null;
     }

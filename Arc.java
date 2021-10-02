@@ -1,3 +1,6 @@
+/**
+ * the class arc
+ */
 public class Arc {
     private String name;    // arc name
     private Place place;

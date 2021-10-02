@@ -2,6 +2,9 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
+/**
+ * add some examples to test this procedure by JunitTest
+ */
 public class InterlockingImpl_Test {
     @Test
     public void initPetriNets() {
@@ -40,7 +43,7 @@ public class InterlockingImpl_Test {
             e.printStackTrace();
         }
 
-        //  test add 3 to 4 (there is no valid path from the entry to the destination)
+        //  test add 3 to 4 (OK)
         String trainName3 = "train3";
         int entryTrackSection3 = 3;
         int destinationTrackSection3 = 4;
@@ -53,7 +56,7 @@ public class InterlockingImpl_Test {
             e.printStackTrace();
         }
 
-        // test add 10 to 1 (There is no valid path from the entry to the destination)
+        // test add 10 to 1 (there is no valid path from the entry to the destination)
         String trainName4 = "train4";
         try {
             interlocking.addTrain("train4", 10, 1);
@@ -64,7 +67,7 @@ public class InterlockingImpl_Test {
             e.printStackTrace();
         }
 
-        //  test add 4 to 3
+        //  test add 4 to 3 (There is no valid path from the entry to the destination)
         String trainName5 = "train3";
         try {
             interlocking.addTrain("train5", 4, 3);
