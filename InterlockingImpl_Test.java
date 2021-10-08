@@ -194,12 +194,29 @@ public class InterlockingImpl_Test {
         } catch (IllegalStateException e) {
             e.printStackTrace();
         }
-        
+
         try {
             List<Transition> res=interlocking.getTransitionList();
             for(Transition e:res){
                 System.out.println("name: "+e.getName());
             }
+        }catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void checkIsConflict(){
+        InterlockingImpl interlocking = new InterlockingImpl();
+        try {
+           boolean flag= interlocking.checkIsConflict(4,3);
+           if(flag){
+               System.out.println("track sections isn't conflict");
+           }else {
+               System.out.println("track sections is conflict");
+           }
         }catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (IllegalStateException e) {
