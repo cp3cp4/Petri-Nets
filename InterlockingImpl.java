@@ -304,7 +304,7 @@ public class InterlockingImpl implements Interlocking
     public int getTrain(String trainName)
         throws IllegalArgumentException {
             if (!this.trainMap.containsKey(trainName)) {
-                throw new IllegalArgumentException("train named " + trainName + "does not exist");
+                throw new IllegalArgumentException("train named " + trainName + " does not exist");
             }
 
             return this.trainMap.get(trainName).getCurSection();
@@ -336,10 +336,16 @@ public class InterlockingImpl implements Interlocking
      */
     public void checkTrackSectionValid(int trackSection) {
         if (trackSection < 1 || trackSection > this.places.length) {
-            throw new IllegalArgumentException("track section does not exist!");
+            throw new IllegalArgumentException("track section "+trackSection+" does not exist!");
         }
     }
 
+    /**
+     * check track sections is conflict
+     * @param entryTrackSection The id number of the track section that the train is entering into.
+     * @param  destinationTrackSection The id number of the track section that the train should exit from.
+     * @return true is ok
+     */
     public boolean checkIsConflict(int entryTrackSection, int destinationTrackSection) {
         // 3-4
         if (entryTrackSection == 3 && destinationTrackSection == 4) {
@@ -365,6 +371,10 @@ public class InterlockingImpl implements Interlocking
         return false;
     }
 
+    /**
+     * get all trains
+     * @return trains list
+     */
     public List<Transition> getTransitionList() {
         List<Transition> transList = new ArrayList<>();
         for (String name : transitionMap.keySet()) {
